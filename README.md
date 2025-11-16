@@ -1,103 +1,179 @@
 # cariad-connected-usage-intel
 
-An end-to-end analytics project simulating **connected vehicle usage intelligence** for an automotive software environment (similar to CARIAD / VW Group).
-
-The goal is to build a small **analytics platform** using:
-
-- **PostgreSQL** – Data warehouse backend  
-- **SQL** – Dimensional model + aggregations  
-- **Python (Pandas + SQLAlchemy)** – ETL pipeline  
-- **Power BI** – Interactive BI dashboard for product & usage insights  
+An end-to-end analytics project simulating **connected vehicle usage intelligence**, similar to how CARIAD (Volkswagen Group) monitors feature usage, app stability, user behavior, and regional performance.  
+This project builds a complete analytics stack using **Python, SQL, PostgreSQL, Power BI**, and a dimensional data warehouse.
 
 ---
 
-## 1. Business Problem
+## 1. Project Overview
 
-Modern connected vehicles continuously send usage events from features like **Navigation, Lock/Unlock, Remote Climate, Charging, Trip History, Voice Assistant**, etc.
+Modern connected vehicles send millions of usage events — feature interactions, errors, app sessions, and telemetry.  
+Product and Data teams need insights such as:
 
-Product and BI teams want to know:
-
-- Which features are most/least used?
-- How does usage vary by **region, vehicle model, OS, app version**?
-- What is the **error rate** per feature / platform?
+- Which features are heavily used?
+- What is the error rate by app version?
 - How engaged are users (DAU, session duration)?
-- How can we monitor **stability of new app versions**?
+- Which regions or vehicle models have the most activity?
+- How stable are mobile app releases (iOS/Android)?
 
-This project builds a minimal “usage analytics” stack to answer those questions.
-
----
-
-## 2. Dataset
-
-Source CSV files (in `data/`):
-
-- `connected_vehicle_usage_unclean.csv` – Raw, messy data  
-- `connected_vehicle_usage_cleaned.csv` – Cleaned data (output of `clean_data.py` or your notebook)  
-
-Core columns:
-
-- `user_id` – Pseudonymous user identifier  
-- `region` – User region / market  
-- `vehicle_model` – Model, e.g. “Audi e-tron”, “Porsche Taycan”  
-- `feature_name` – Feature used  
-- `session_duration_min` – Usage duration in minutes  
-- `error_flag` – 0/1 flag for failure  
-- `feedback_rating` – User rating (1–5)  
-- `app_version` – Mobile app version (e.g. v1.5)  
-- `os_type` – iOS / Android  
-- `subscription_status` – active / cancelled / trial  
-- `feature_used_at` – Timestamp when feature event happened  
-
-The **cleaned** file also contains:
-
-- `date` – Event date  
-- `week` – ISO week number  
+This project answers these questions through a mini analytics platform.
 
 ---
 
-## 3. Data Model (Star Schema)
+## 2. System Architecture
 
-We use a simple star schema:
+The architecture diagram (`docs/architecture.png`) summarizes the workflow:
 
-- `stg_feature_usage` – Raw staging table
-- `dim_user` – User dimension (region, subscription)
-- `dim_vehicle` – Vehicle model dimension
-- `dim_feature` – Feature dimension
-- `fact_feature_usage` – Fact table with events (joins all dims)
-- `agg_usage_daily` – Daily aggregate for BI dashboards
-
----
-
-## 4. Tech Stack & Pipeline
-
-### 4.1 ETL Flow
-
-1. **Clean data**  
-   - Use `notebooks/01_data_cleaning.ipynb` or `src/clean_data.py`  
-   - Output: `data/connected_vehicle_usage_cleaned.csv`
-
-2. **Load to PostgreSQL staging**  
-   - Run: `python src/load_to_postgres.py`  
-   - Writes into `stg_feature_usage`
-
-3. **Build dimensions & fact**  
-   - Run: `python src/transform_to_dim_fact.py`  
-   - Populates `dim_user`, `dim_vehicle`, `dim_feature`, `fact_feature_usage`
-
-4. **Create daily aggregates**  
-   - Run: `python src/daily_aggregation.py`  
-   - Populates `agg_usage_daily`
-
-5. **Connect Power BI**  
-   - Connect to PostgreSQL and build dashboards on top of `agg_usage_daily` + fact tables.
+1. Raw CSV →  
+2. Cleaned using Jupyter notebook →  
+3. Loaded into PostgreSQL staging tables →  
+4. Transformed into Dims + Fact →  
+5. Aggregated into daily metrics →  
+6. Connected to Power BI dashboard.
 
 ---
 
-## 5. Running the Project
+## 3. Directory Structure
 
-### 5.1 Create database & tables
+```
+cariad-connected-usage-intel/
+│
+├── data/
+│   ├── connected_vehicle_usage_unclean.csv
+│   ├── connected_vehicle_usage_cleaned.csv
+│
+├── notebooks/
+│   └── 01_data_cleaning.ipynb
+│
+├── sql/
+│   ├── schema.sql
+│   ├── dim_load.sql
+│   ├── fact_load.sql
+│   └── agg_daily.sql
+│
+├── src/
+│   ├── load_to_postgres.py
+│   ├── transform_to_dim_fact.py
+│   └── daily_aggregation.py
+│
+├── powerbi/
+│   └── dashboard.pbix
+│
+├── docs/
+│   └── architecture.png
+│
+└── README.md
+```
 
-In PostgreSQL:
+---
+
+## 4. Data Cleaning (Jupyter Notebook)
+
+Use the notebook:
+
+```
+notebooks/01_data_cleaning.ipynb
+```
+
+It:
+
+- Handles missing values  
+- Normalizes text  
+- Fixes invalid entries  
+- Extracts date and week  
+- Saves cleaned file:  
+
+```
+data/connected_vehicle_usage_cleaned.csv
+```
+
+---
+
+## 5. PostgreSQL Setup
+
+### Create database
 
 ```sql
 CREATE DATABASE connectedvehicledb;
+```
+
+### Create tables
+
+```bash
+psql -d connectedvehicledb -f sql/schema.sql
+```
+
+---
+
+## 6. Set Environment Variable
+
+### Windows PowerShell:
+
+```powershell
+$env:CONNECTED_VEHICLE_DB_URL="postgresql://postgres:<YOUR_PASSWORD>@localhost:5432/connectedvehicledb"
+```
+
+---
+
+## 7. Run the ETL Pipeline
+
+### Load cleaned data → Staging
+
+```bash
+python src/load_to_postgres.py
+```
+
+### Build Dimensions + Fact
+
+```bash
+python src/transform_to_dim_fact.py
+```
+
+### Build Daily Aggregates
+
+```bash
+python src/daily_aggregation.py
+```
+
+---
+
+## 8. Power BI Dashboard
+
+Open:
+
+```
+powerbi/dashboard.pbix
+```
+
+Power BI → Get Data → PostgreSQL:
+
+```
+Server: localhost
+Database: connectedvehicledb
+```
+
+Select:
+
+- agg_usage_daily  
+- dim_user  
+- dim_vehicle  
+- dim_feature  
+- fact_feature_usage  
+
+---
+
+## 9. Technologies Used
+
+- **Python**
+- **Jupyter Notebook**
+- **PostgreSQL**
+- **Power BI**
+- **SQL**
+
+---
+
+## 10. Author
+
+Project by **Nitish Kumar Pandey**
+
+---
