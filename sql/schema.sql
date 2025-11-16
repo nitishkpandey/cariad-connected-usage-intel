@@ -1,15 +1,10 @@
-## `sql/schema.sql`
 
-> This version adds **UNIQUE** constraints so `ON CONFLICT` works in the dim-load scripts.
-
-```sql
--- Drop existing tables if you want to reset (optional)
--- DROP TABLE IF EXISTS agg_usage_daily;
--- DROP TABLE IF EXISTS fact_feature_usage;
--- DROP TABLE IF EXISTS dim_feature;
--- DROP TABLE IF EXISTS dim_vehicle;
--- DROP TABLE IF EXISTS dim_user;
--- DROP TABLE IF EXISTS stg_feature_usage;
+DROP TABLE IF EXISTS agg_usage_daily;
+DROP TABLE IF EXISTS fact_feature_usage;
+DROP TABLE IF EXISTS dim_feature;
+DROP TABLE IF EXISTS dim_vehicle;
+DROP TABLE IF EXISTS dim_user;
+DROP TABLE IF EXISTS stg_feature_usage;
 
 -- 1. Staging table: raw events
 CREATE TABLE IF NOT EXISTS stg_feature_usage (
@@ -71,3 +66,7 @@ CREATE TABLE IF NOT EXISTS agg_usage_daily (
     avg_session FLOAT,
     error_rate_pct FLOAT
 );
+
+ALTER TABLE stg_feature_usage
+ADD COLUMN date DATE,
+ADD COLUMN week INT;
