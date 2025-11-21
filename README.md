@@ -1,6 +1,6 @@
-# cariad-connected-usage-intel
+# vehicle-connected-usage-intel
 
-An end-to-end analytics project simulating **connected vehicle usage intelligence**, similar to how CARIAD (Volkswagen Group) monitors feature usage, app stability, user behavior, and regional performance.  
+An end-to-end analytics project simulating **connected vehicle usage intelligence**, similar to how leading automobile group monitors feature usage, app stability, user behavior, and regional performance.  
 This project builds a complete analytics stack using **Python, SQL, PostgreSQL, Power BI**, and a dimensional data warehouse.
 
 ---
